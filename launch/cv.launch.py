@@ -27,9 +27,5 @@ def generate_launch_description():
                 ('/image_in', '/head_front_camera/rgb/image_raw'),
                 ('/pointcloud_in', '/head_front_camera/depth_registered/points'),
             ],
-            parameters=[{
-                "opencv": False,
-                "pcl": False,
-            }]
         )
     ])
