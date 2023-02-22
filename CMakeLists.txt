@@ -16,7 +16,7 @@ find_package(OpenCV REQUIRED)
 find_package(PCL 1.8 REQUIRED QUIET)
 find_package(pcl_conversions REQUIRED)
 
-include_directories(include ${OpenCV_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} )
+include_directories(include ${OpenCV_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
 link_directories(${OpenCV_LIBRARY_DIRS} ${PCL_LIBRARY_DIRS})
 add_definitions(${OpenCV_DEFINITIONS} ${PCL_DEFINITIONS})
 
