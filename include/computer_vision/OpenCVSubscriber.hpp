@@ -67,7 +67,7 @@ private:
       RCLCPP_WARN(get_logger(), "Camera Model not yet available");
       return;
     }
-    
+
     // Convert ROS Image to OpenCV Image | sensor_msgs::msg::Image -> cv::Mat
     cv_bridge::CvImagePtr cv_ptr;
     try {
