@@ -22,7 +22,10 @@
 pcl::PointCloud<pcl::PointXYZRGB> PCLSubscriber::pcl_processing(
   const pcl::PointCloud<pcl::PointXYZRGB> in_pointcloud) const
 {
+  // Create output image
   pcl::PointCloud<pcl::PointXYZRGB> out_pointcloud;
+
+  // Processing
   out_pointcloud = in_pointcloud;
   return out_pointcloud;
 }
