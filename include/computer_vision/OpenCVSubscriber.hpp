@@ -21,6 +21,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/opencv.hpp>
+#include "sensor_msgs/msg/camera_info.hpp"
+#include "image_geometry/pinhole_camera_model.h"
 
 #include "cv_bridge/cv_bridge.h"
 #include "rclcpp/rclcpp.hpp"
@@ -33,26 +35,38 @@ public:
   OpenCVSubscriber()
   : Node("opencv_subscriber")
   {
-    subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
-      "/image_in", rclcpp::SensorDataQoS().reliable(),
-      std::bind(&OpenCVSubscriber::topic_callback, this, std::placeholders::_1));
+    subscription_rgb_ = this->create_subscription<sensor_msgs::msg::Image>(
+      "/image_rgb_in", rclcpp::SensorDataQoS().reliable(),
+      std::bind(&OpenCVSubscriber::topic_callback_rgb, this, std::placeholders::_1));
 
-    publisher_ = this->create_publisher<sensor_msgs::msg::Image>(
-      "image",
+    publisher_rgb_ = this->create_publisher<sensor_msgs::msg::Image>(
+      "image_rgb",
       rclcpp::SensorDataQoS().reliable());
+
+    subscription_depth_ = this->create_subscription<sensor_msgs::msg::Image>(
+      "/image_depth_in", rclcpp::SensorDataQoS().reliable(),
+      std::bind(&OpenCVSubscriber::topic_callback_depth, this, std::placeholders::_1));
+
+    publisher_depth_ = this->create_publisher<sensor_msgs::msg::Image>(
+      "image_depth",
+      rclcpp::SensorDataQoS().reliable());
+
+    subscription_info_ = create_subscription<sensor_msgs::msg::CameraInfo>(
+      "/camera_info", 1, std::bind(&OpenCVSubscriber::topic_callback_info, this, std::placeholders::_1));
   }
 
 private:
-  cv::Mat image_processing(const cv::Mat in_image) const;
+  cv::Mat image_processing_rgb(const cv::Mat in_image) const;
+  cv::Mat image_processing_depth(const cv::Mat in_image) const;
 
-  void topic_callback(const sensor_msgs::msg::Image::SharedPtr msg) const
+  void topic_callback_rgb(const sensor_msgs::msg::Image::SharedPtr msg) const
   {
     // Convert ROS Image to CV Image
     cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
     cv::Mat image_raw = cv_ptr->image;
 
     // Image processing
-    cv::Mat cv_image = image_processing(image_raw);
+    cv::Mat cv_image = image_processing_rgb(image_raw);
 
     // Convert OpenCV Image to ROS Image
     cv_bridge::CvImage img_bridge =
@@ -65,11 +79,49 @@ private:
     img_bridge.toImageMsg(out_image);
 
     // Publish the data
-    publisher_->publish(out_image);
+    publisher_rgb_->publish(out_image);
   }
 
-  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr subscription_;
-  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher_;
+  void topic_callback_depth(const sensor_msgs::msg::Image::SharedPtr msg) const
+  {
+    // Convert ROS Image to CV Image
+    cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::TYPE_32FC1);
+    cv::Mat image_raw = cv_ptr->image;
+
+    // Image processing
+    cv::Mat cv_image = image_processing_depth(image_raw);
+
+    // Convert OpenCV Image to ROS Image
+    cv_bridge::CvImage img_bridge =
+      cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::TYPE_32FC1, cv_image);
+
+    // >> message to be sent
+    sensor_msgs::msg::Image out_image;
+
+    // from cv_bridge to sensor_msgs::Image
+    img_bridge.toImageMsg(out_image);
+
+    // Publish the data
+    publisher_depth_->publish(out_image);
+  }
+
+	void topic_callback_info(sensor_msgs::msg::CameraInfo::UniquePtr msg)
+	{
+		RCLCPP_INFO(get_logger(), "Camera info received");
+
+		camera_model_ = std::make_shared<image_geometry::PinholeCameraModel>();
+		camera_model_->fromCameraInfo(*msg);
+		std::cout << camera_model_->intrinsicMatrix() << std::endl;
+
+		subscription_info_ = nullptr;
+	}
+
+  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr subscription_rgb_;
+  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher_rgb_;
+  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr subscription_depth_;
+  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher_depth_;
+  rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr subscription_info_;
+  std::shared_ptr<image_geometry::PinholeCameraModel> camera_model_;
 };
 
 #endif  // INCLUDE_COMPUTER_VISION_OPENCVSUBSCRIBER_HPP_

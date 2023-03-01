@@ -15,6 +15,7 @@ find_package(std_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(PCL 1.8 REQUIRED QUIET)
 find_package(pcl_conversions REQUIRED)
+find_package(image_geometry REQUIRED)
 
 include_directories(include ${OpenCV_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
 link_directories(${OpenCV_LIBRARY_DIRS} ${PCL_LIBRARY_DIRS})
@@ -29,6 +30,7 @@ set(dependencies
   OpenCV
   PCL
   pcl_conversions
+  image_geometry
 )
 
 # OpenCV and PCL node

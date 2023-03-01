@@ -19,7 +19,7 @@
 /**
    TO-DO: Default - the output image is the same as the input
  */
-cv::Mat OpenCVSubscriber::image_processing(const cv::Mat in_image) const
+cv::Mat OpenCVSubscriber::image_processing_rgb(const cv::Mat in_image) const
 {
   // Create output image
   cv::Mat out_image;
@@ -28,7 +28,29 @@ cv::Mat OpenCVSubscriber::image_processing(const cv::Mat in_image) const
   out_image = in_image;
 
   // Show image in a different window
-  cv::imshow("out_image", out_image);
+  cv::imshow("out_image_rgb", out_image);
+  cv::waitKey(3);
+
+  // You must to return a 3-channels image to show it in ROS,
+  // so do it with 1-channel images
+  // cv::cvtColor(out_image, out_image, cv::COLOR_GRAY2BGR);
+  return out_image;
+}
+
+
+/**
+   TO-DO: Default - the output image is the same as the input
+ */
+cv::Mat OpenCVSubscriber::image_processing_depth(const cv::Mat in_image) const
+{
+  // Create output image
+  cv::Mat out_image;
+
+  // Processing
+  out_image = in_image;
+
+  // Show image in a different window
+  cv::imshow("out_image_depth", out_image);
   cv::waitKey(3);
 
   // You must to return a 3-channels image to show it in ROS,
