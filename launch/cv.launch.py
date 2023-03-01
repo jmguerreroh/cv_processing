@@ -25,6 +25,7 @@ def generate_launch_description():
             executable='cv_program',
             # Use topics from robot
             remappings=[
+                ('/camera_info', '/head_front_camera/rgb/camera_info'),
                 ('/image_rgb_in', '/head_front_camera/rgb/image_raw'),
                 ('/image_depth_in', '/head_front_camera/depth_registered/image_raw'),
                 ('/pointcloud_in', '/head_front_camera/depth_registered/points'),

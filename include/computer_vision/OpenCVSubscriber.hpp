@@ -62,8 +62,20 @@ private:
 
   void topic_callback_rgb(const sensor_msgs::msg::Image::SharedPtr msg) const
   {
-    // Convert ROS Image to CV Image
-    cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+    // Check if camera model has been received
+    if (camera_model_ == nullptr) {
+      RCLCPP_WARN(get_logger(), "Camera Model not yet available");
+      return;
+    }
+    
+    // Convert ROS Image to OpenCV Image | sensor_msgs::msg::Image -> cv::Mat
+    cv_bridge::CvImagePtr cv_ptr;
+    try {
+      cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+    } catch (cv_bridge::Exception & e) {
+      RCLCPP_ERROR(get_logger(), "cv_bridge exception: %s", e.what());
+      return;
+    }
     cv::Mat image_raw = cv_ptr->image;
 
     // Image processing
@@ -85,9 +97,26 @@ private:
 
   void topic_callback_depth(const sensor_msgs::msg::Image::SharedPtr msg) const
   {
-    // Convert ROS Image to CV Image
-    cv_bridge::CvImagePtr cv_ptr =
-      cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::TYPE_32FC1);
+    // Check if camera model has been received
+    if (camera_model_ == nullptr) {
+      RCLCPP_WARN(get_logger(), "Camera Model not yet available");
+      return;
+    }
+
+    // Check if depth image has been received
+    if (msg->encoding != "16UC1" && msg->encoding != "32FC1") {
+      RCLCPP_ERROR(get_logger(), "The image type has not depth info");
+      return;
+    }
+
+    // Convert ROS Image to OpenCV Image| sensor_msgs::msg::Image -> cv::Mat
+    cv_bridge::CvImagePtr cv_ptr;
+    try {
+      cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::TYPE_32FC1);
+    } catch (cv_bridge::Exception & e) {
+      RCLCPP_ERROR(get_logger(), "cv_bridge exception: %s", e.what());
+      return;
+    }
     cv::Mat image_raw = cv_ptr->image;
 
     // Image processing
