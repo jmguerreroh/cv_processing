@@ -36,14 +36,13 @@ public:
   PCLSubscriber()
   : Node("pcl_subscriber")
   {
-    auto qos = rclcpp::QoS(rclcpp::QoSInitialization(RMW_QOS_POLICY_HISTORY_KEEP_LAST, 5));
-    qos.reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-
     subscription_3d_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-      "/pointcloud_in", qos,
+      "/pointcloud_in", rclcpp::SensorDataQoS().reliable(),
       std::bind(&PCLSubscriber::topic_callback_3d, this, std::placeholders::_1));
 
-    publisher_3d_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("pointcloud", qos);
+    publisher_3d_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+      "pointcloud",
+      rclcpp::SensorDataQoS().reliable());
   }
 
 private:

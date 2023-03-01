@@ -33,13 +33,13 @@ public:
   OpenCVSubscriber()
   : Node("opencv_subscriber")
   {
-    auto qos = rclcpp::QoS(rclcpp::QoSInitialization(RMW_QOS_POLICY_HISTORY_KEEP_LAST, 5));
-    qos.reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE);
-
     subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
-      "/image_in", qos, std::bind(&OpenCVSubscriber::topic_callback, this, std::placeholders::_1));
+      "/image_in", rclcpp::SensorDataQoS().reliable(),
+      std::bind(&OpenCVSubscriber::topic_callback, this, std::placeholders::_1));
 
-    publisher_ = this->create_publisher<sensor_msgs::msg::Image>("image", qos);
+    publisher_ = this->create_publisher<sensor_msgs::msg::Image>(
+      "image",
+      rclcpp::SensorDataQoS().reliable());
   }
 
 private:
