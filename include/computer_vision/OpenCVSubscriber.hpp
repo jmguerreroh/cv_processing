@@ -68,31 +68,33 @@ private:
       return;
     }
 
-    // Convert ROS Image to OpenCV Image | sensor_msgs::msg::Image -> cv::Mat
-    cv_bridge::CvImagePtr cv_ptr;
-    try {
-      cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-    } catch (cv_bridge::Exception & e) {
-      RCLCPP_ERROR(get_logger(), "cv_bridge exception: %s", e.what());
-      return;
+    if (publisher_rgb_->get_subscription_count() > 0) { // Remove if you want to process it anyway (you will see the image in a OpenCV Window)
+      // Convert ROS Image to OpenCV Image | sensor_msgs::msg::Image -> cv::Mat
+      cv_bridge::CvImagePtr cv_ptr;
+      try {
+        cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+      } catch (cv_bridge::Exception & e) {
+        RCLCPP_ERROR(get_logger(), "cv_bridge exception: %s", e.what());
+        return;
+      }
+      cv::Mat image_raw = cv_ptr->image;
+
+      // Image processing
+      cv::Mat cv_image = image_processing_rgb(image_raw);
+
+      // Convert OpenCV Image to ROS Image
+      cv_bridge::CvImage img_bridge =
+        cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, cv_image);
+
+      // >> message to be sent
+      sensor_msgs::msg::Image out_image;
+
+      // from cv_bridge to sensor_msgs::Image
+      img_bridge.toImageMsg(out_image);
+
+      // Publish the data
+      publisher_rgb_->publish(out_image);
     }
-    cv::Mat image_raw = cv_ptr->image;
-
-    // Image processing
-    cv::Mat cv_image = image_processing_rgb(image_raw);
-
-    // Convert OpenCV Image to ROS Image
-    cv_bridge::CvImage img_bridge =
-      cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, cv_image);
-
-    // >> message to be sent
-    sensor_msgs::msg::Image out_image;
-
-    // from cv_bridge to sensor_msgs::Image
-    img_bridge.toImageMsg(out_image);
-
-    // Publish the data
-    publisher_rgb_->publish(out_image);
   }
 
   void topic_callback_depth(const sensor_msgs::msg::Image::SharedPtr msg) const
@@ -109,31 +111,33 @@ private:
       return;
     }
 
-    // Convert ROS Image to OpenCV Image| sensor_msgs::msg::Image -> cv::Mat
-    cv_bridge::CvImagePtr cv_ptr;
-    try {
-      cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::TYPE_32FC1);
-    } catch (cv_bridge::Exception & e) {
-      RCLCPP_ERROR(get_logger(), "cv_bridge exception: %s", e.what());
-      return;
+    if (publisher_depth_->get_subscription_count() > 0) { // Remove if you want to process it anyway (you will see the image in a OpenCV Window)
+      // Convert ROS Image to OpenCV Image| sensor_msgs::msg::Image -> cv::Mat
+      cv_bridge::CvImagePtr cv_ptr;
+      try {
+        cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::TYPE_32FC1);
+      } catch (cv_bridge::Exception & e) {
+        RCLCPP_ERROR(get_logger(), "cv_bridge exception: %s", e.what());
+        return;
+      }
+      cv::Mat image_raw = cv_ptr->image;
+
+      // Image processing
+      cv::Mat cv_image = image_processing_depth(image_raw);
+
+      // Convert OpenCV Image to ROS Image
+      cv_bridge::CvImage img_bridge =
+        cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::TYPE_32FC1, cv_image);
+
+      // >> message to be sent
+      sensor_msgs::msg::Image out_image;
+
+      // from cv_bridge to sensor_msgs::Image
+      img_bridge.toImageMsg(out_image);
+
+      // Publish the data
+      publisher_depth_->publish(out_image);
     }
-    cv::Mat image_raw = cv_ptr->image;
-
-    // Image processing
-    cv::Mat cv_image = image_processing_depth(image_raw);
-
-    // Convert OpenCV Image to ROS Image
-    cv_bridge::CvImage img_bridge =
-      cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::TYPE_32FC1, cv_image);
-
-    // >> message to be sent
-    sensor_msgs::msg::Image out_image;
-
-    // from cv_bridge to sensor_msgs::Image
-    img_bridge.toImageMsg(out_image);
-
-    // Publish the data
-    publisher_depth_->publish(out_image);
   }
 
   void topic_callback_info(sensor_msgs::msg::CameraInfo::UniquePtr msg)

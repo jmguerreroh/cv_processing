@@ -36,11 +36,11 @@ public:
   PCLSubscriber()
   : Node("pcl_subscriber")
   {
-    subscription_3d_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+    subscription_pointcloud_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
       "/pointcloud_in", rclcpp::SensorDataQoS().reliable(),
-      std::bind(&PCLSubscriber::topic_callback_3d, this, std::placeholders::_1));
+      std::bind(&PCLSubscriber::topic_callback_pointcloud, this, std::placeholders::_1));
 
-    publisher_3d_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+    publisher_pointcloud_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
       "pointcloud",
       rclcpp::SensorDataQoS().reliable());
   }
@@ -49,25 +49,27 @@ private:
   pcl::PointCloud<pcl::PointXYZRGB> pcl_processing(
     const pcl::PointCloud<pcl::PointXYZRGB> in_pointcloud) const;
 
-  void topic_callback_3d(const sensor_msgs::msg::PointCloud2::SharedPtr msg) const
+  void topic_callback_pointcloud(const sensor_msgs::msg::PointCloud2::SharedPtr msg) const
   {
-    // Convert to PCL data type
-    pcl::PointCloud<pcl::PointXYZRGB> point_cloud;
-    pcl::fromROSMsg(*msg, point_cloud);
+    if (publisher_pointcloud_->get_subscription_count() > 0) { // Remove if you want to process it anyway
+      // Convert to PCL data type
+      pcl::PointCloud<pcl::PointXYZRGB> point_cloud;
+      pcl::fromROSMsg(*msg, point_cloud);
 
-    pcl::PointCloud<pcl::PointXYZRGB> pcl_pointcloud = pcl_processing(point_cloud);
+      pcl::PointCloud<pcl::PointXYZRGB> pcl_pointcloud = pcl_processing(point_cloud);
 
-    // Convert to ROS data type
-    sensor_msgs::msg::PointCloud2 output;
-    pcl::toROSMsg(pcl_pointcloud, output);
-    output.header = msg->header;
+      // Convert to ROS data type
+      sensor_msgs::msg::PointCloud2 output;
+      pcl::toROSMsg(pcl_pointcloud, output);
+      output.header = msg->header;
 
-    // Publish the data
-    publisher_3d_->publish(output);
+      // Publish the data
+      publisher_pointcloud_->publish(output);
+    }
   }
 
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr subscription_3d_;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher_3d_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr subscription_pointcloud_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher_pointcloud_;
 };
 
 #endif  // INCLUDE_COMPUTER_VISION_PCLSUBSCRIBER_HPP_
